@@ -140,10 +140,10 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   drawLabelVal("Invoice No :", header.invoiceNo, leftX, infoBlockY + lineHeight * 3);
 
   // Right Column - Dates and Totals
-  doc.setFont(fontName, 'bold'); doc.text("Invoice Date:", rightX, infoBlockY);
+  doc.setFont(fontName, 'normal'); doc.text("Invoice Date:", rightX, infoBlockY);
   doc.setFont(fontName, 'normal'); doc.text(header.invoiceDate || '', rightX + 28, infoBlockY);
 
-  doc.setFont(fontName, 'bold'); doc.text("Billing Date:", rightX, infoBlockY + lineHeight);
+  doc.setFont(fontName, 'normal'); doc.text("Billing Date:", rightX, infoBlockY + lineHeight);
   doc.setFont(fontName, 'normal'); doc.text(header.billingDate || '', rightX + 28, infoBlockY + lineHeight);
 
   // L/C Number on left side
@@ -297,8 +297,8 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
     ["Neelngar, Konabari, Gazipur"],
     ["Inventory Report"],
     [],
-    ["Buyer Name :", header.buyerName, "", "", "", "", "", "", "", "", "Invoice Date :", formatDateForReport(header.invoiceDate)],
-    ["Supplier Name:", header.supplierName, "", "", "", "", "", "", "", "", "Billing Date :", formatDateForReport(header.billingDate)],
+    ["Buyer Name :", header.buyerName, "", "", "", "", "", "", "", "Invoice Date :", formatDateForReport(header.invoiceDate)],
+    ["Supplier Name:", header.supplierName, "", "", "", "", "", "", "", "Billing Date :", formatDateForReport(header.billingDate)],
     ["File No :", header.fileNo],
     ["Invoice No :", header.invoiceNo],
     ["L/C Number :", header.lcNumber],
@@ -353,9 +353,10 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
   data.push([]);
   data.push([]);
   data.push([]);
+  data.push([]);
 
   // Add signature row
-  data.push(["Prepared By", "", "", "", "", "", "", "Store In-Charge", "", "", ""]);
+  data.push(["Prepared By", "", "", "", "", "", "",  "", "","Store In-Charge", ""]);
 
   // Add rows to worksheet
   data.forEach((rowData) => {
@@ -482,8 +483,8 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
         cell.font = { bold: true, size: 10 };
         cell.alignment = { horizontal: 'center', vertical: 'top' };
         
-        // Add top border only to cells with content (Prepared By and Store In-Charge)
-        if (colNumber === 1 || colNumber === 8) {
+        // Add top border only to cells with content (Prepared By - col 1, and Store In-Charge - col 10)
+        if (colNumber === 1 || colNumber === 10) {
           cell.border = topBorderOnly;
         }
         // No border for empty cells
