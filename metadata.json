@@ -1,0 +1,5 @@
+{
+  "name": "Tusuka Inventory Report Generator",
+  "description": "A professional inventory report generator that exports PDF and Excel files based on specific fabric and billing data.",
+  "requestFramePermissions": []
+}
