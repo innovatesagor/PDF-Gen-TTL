@@ -276,66 +276,164 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
 const generateExcel = (header: ReportHeader, items: LineItem[], totals: Totals, filename: string) => {
   const wb = XLSX.utils.book_new();
   
-  const wsData = [
+  // Pre-process rows 
+  const excelRows = items.map(item => {
+    const invoiceQty = Number(item.invoiceQty) || 0;
+    const rcvdQty = Number(item.rcvdQty) || 0;
+    const unitPrice = Number(item.unitPrice) || 0;
+    const totalRowVal = invoiceQty * unitPrice;
+
+    let description = item.itemDescription || '';
+    const details = [];
+    if (item.color && item.color.trim()) details.push(`Color: ${item.color}`);
+    if (item.hsCode && item.hsCode.trim()) details.push(`H.S Code: ${item.hsCode}`);
+    if (details.length > 0) description += `\n${details.join(', ')}`;
+
+    return [
+      item.fabricCode, description, formatDateForReport(item.rcvdDate),
+      item.challanNo, item.piNumber, item.unit,
+      invoiceQty, rcvdQty, unitPrice, totalRowVal, item.appstremeNo
+    ];
+  });
+
+  const wsData: any[][] = [
     ["Tusuka Trousers Ltd."],
     ["Neelngar, Konabari, Gazipur"],
     ["Inventory Report"],
     [],
-    ["Buyer Name :", header.buyerName, "", "", "", "", "", "Invoice Date:", header.invoiceDate],
-    ["Supplier Name:", header.supplierName, "", "", "", "", "", "Billing Date:", header.billingDate],
+    ["Buyer Name :", header.buyerName, null, null, null, null, null, "Invoice Date :", formatDateForReport(header.invoiceDate)],
+    ["Supplier Name:", header.supplierName, null, null, null, null, null, "Billing Date :", formatDateForReport(header.billingDate)],
     ["File No :", header.fileNo],
     ["Invoice No :", header.invoiceNo],
     ["L/C Number :", header.lcNumber],
     [],
+    // Row 10: Header
     [
-      "Fabric Code", "Item Description", "Color", "HS Code", "Rcvd Date", "Challan No", 
-      "Pi Number", "Unit", "Invoice Qty", "Rcvd Qty", "Unit Price $", "Total Value", "Appstreme No"
+      "Fabric Code", "Item Description", "Rcvd Date", "Challan No", "Pi Number", 
+      "Unit", "Invoice Qty", "Rcvd Qty", "Unit Price $", "Total Value", "Appstreme No.\n(Receipt no)"
     ]
   ];
 
-  items.forEach(item => {
-    // FIX: Safely cast to numbers for Excel as well
-    const invoiceQty = Number(item.invoiceQty) || 0;
-    const rcvdQty = Number(item.rcvdQty) || 0;
-    const unitPrice = Number(item.unitPrice) || 0;
-    const totalVal = invoiceQty * unitPrice;
+  // Add Item Rows
+  excelRows.forEach(row => wsData.push(row as any[]));
 
-    wsData.push([
-      item.fabricCode,
-      item.itemDescription,
-      item.color,
-      item.hsCode,
-      item.rcvdDate,
-      item.challanNo,
-      item.piNumber,
-      item.unit,
-      invoiceQty.toString(),
-      rcvdQty.toString(),
-      unitPrice.toString(),
-      totalVal.toFixed(2),
-      item.appstremeNo
-    ]);
-  });
-
+  // Add Footer Row 
   wsData.push([
-    "Total:", "", "", "", "", "", "", "", 
-    totals.totalInvoiceQty.toString(), 
-    totals.totalRcvdQty.toString(), 
-    "", 
-    totals.totalValue.toFixed(2), 
-    ""
+    "", "", "", "", "Total:", "YDS", 
+    totals.totalInvoiceQty, totals.totalRcvdQty, "", totals.totalValue, ""
   ]);
+
+  // Add empty rows for spacing before signature
+  wsData.push([]); 
+  wsData.push([]); 
+  wsData.push([]); 
+  wsData.push([]); 
+
+  // Add Signature Row
+  const sigRowIndex = wsData.length;
+  const sigRow = new Array(11).fill("");
+  sigRow[1] = "Prepared By";
+  sigRow[9] = "Store In-Charge";
+  wsData.push(sigRow);
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
 
+  // --- Styling Constants ---
+  const thinBorder = {
+    top: { style: "thin", color: { rgb: "000000" } },
+    bottom: { style: "thin", color: { rgb: "000000" } },
+    left: { style: "thin", color: { rgb: "000000" } },
+    right: { style: "thin", color: { rgb: "000000" } }
+  };
+
+  const centerAlign = { horizontal: "center", vertical: "center", wrapText: true };
+  const leftAlign = { horizontal: "left", vertical: "center", wrapText: true };
+  const rightAlign = { horizontal: "right", vertical: "center" };
+
+  const labelStyle = { font: { bold: true }, alignment: { horizontal: "left" } };
+  const headerStyle = {
+    font: { bold: true, sz: 10 },
+    alignment: centerAlign,
+    border: thinBorder,
+    fill: { fgColor: { rgb: "F0F0F0" } } 
+  };
+
+  const dataStyleCenter = { font: { sz: 9 }, alignment: centerAlign, border: thinBorder };
+  const dataStyleLeft = { font: { sz: 9 }, alignment: leftAlign, border: thinBorder };
+  const dataStyleRightCurrency = { font: { sz: 9 }, alignment: rightAlign, border: thinBorder, numFmt: "0.00" };
+  const footerStyle = { font: { bold: true, sz: 10 }, alignment: rightAlign, border: thinBorder, numFmt: "0.00" };
+  const signatureTextStyle = {
+    font: { bold: true, sz: 9 },
+    alignment: { horizontal: "center", vertical: "top" },
+    border: { top: { style: "thin", color: { rgb: "000000" } } }
+  };
+
+  // --- Apply Styles ---
+  ws['A1'].s = { font: { bold: true, sz: 18 }, alignment: { horizontal: "center" } };
+  ws['A2'].s = { font: { sz: 12 }, alignment: { horizontal: "center" } };
+  ws['A3'].s = { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } };
+
+  const infoRowIndices = [4, 5, 6, 7, 8];
+  infoRowIndices.forEach(r => {
+    const cellRef = XLSX.utils.encode_cell({ r, c: 0 });
+    const cellRef2 = XLSX.utils.encode_cell({ r, c: 7 }); 
+    if(ws[cellRef]) ws[cellRef].s = labelStyle;
+    if(ws[cellRef2]) ws[cellRef2].s = labelStyle;
+  });
+
+  const headerRowIndex = 10;
+  for(let c = 0; c <= 10; c++) {
+    const cellRef = XLSX.utils.encode_cell({ r: headerRowIndex, c });
+    if(ws[cellRef]) ws[cellRef].s = headerStyle;
+  }
+
+  const startDataRow = 11;
+  const endDataRow = startDataRow + items.length - 1;
+
+  for (let r = startDataRow; r <= endDataRow; r++) {
+    for (let c = 0; c <= 10; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      if (!ws[cellRef]) continue;
+      let style: any = dataStyleCenter;
+      if (c === 1 || c === 10) style = dataStyleLeft; 
+      if (c === 6 || c === 7 || c === 8 || c === 9) style = dataStyleRightCurrency; 
+      ws[cellRef].s = style;
+    }
+  }
+
+  const footerRowIndex = endDataRow + 1;
+  for (let c = 0; c <= 10; c++) {
+    const cellRef = XLSX.utils.encode_cell({ r: footerRowIndex, c });
+    if (!ws[cellRef]) XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: cellRef });
+    let style = { ...footerStyle };
+    if (c === 4) style.alignment = { horizontal: "right", vertical: "center" }; 
+    if (c === 5) style.alignment = { horizontal: "center", vertical: "center" }; 
+    ws[cellRef].s = style;
+  }
+
   if(!ws['!merges']) ws['!merges'] = [];
-  ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }); 
-  ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 12 } }); 
-  ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 12 } }); 
+  
+  // Signatures
+  ws['!merges'].push({ s: { r: sigRowIndex, c: 0 }, e: { r: sigRowIndex, c: 2 } });
+  const sigLeftRef = XLSX.utils.encode_cell({ r: sigRowIndex, c: 0 });
+  if (!ws[sigLeftRef]) XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: sigLeftRef });
+  ws[sigLeftRef].v = "Prepared By"; 
+  ws[sigLeftRef].s = signatureTextStyle;
+
+  ws['!merges'].push({ s: { r: sigRowIndex, c: 8 }, e: { r: sigRowIndex, c: 10 } });
+  const sigRightRef = XLSX.utils.encode_cell({ r: sigRowIndex, c: 8 });
+  if (!ws[sigRightRef]) XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: sigRightRef });
+  ws[sigRightRef].v = "Store In-Charge";
+  ws[sigRightRef].s = signatureTextStyle;
+
+  // Title Merges
+  ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 10 } }); 
+  ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 10 } }); 
+  ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }); 
 
   ws['!cols'] = [
-    { wch: 15 }, { wch: 25 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
-    { wch: 12 }, { wch: 6 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 15 }
+    { wch: 15 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, 
+    { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
   ];
 
   XLSX.utils.book_append_sheet(wb, ws, "Inventory Report");
