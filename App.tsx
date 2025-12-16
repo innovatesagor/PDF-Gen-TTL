@@ -132,90 +132,83 @@ const App: React.FC = () => {
               <span>Bill Information</span>
             </div>
 
-<div className="bill-info-container">
+            <div className="bill-info-container">
+              {/* LEFT COLUMN */}
+              <div className="bill-info-left">
+                {/* Row 1: Buyer 30% | Supplier 70% */}
+                <div className="row-30-70">
+                  <InputField
+                    label="Buyer Name"
+                    name="buyerName"
+                    value={header.buyerName}
+                    onChange={handleHeaderChange}
+                    placeholder="Buyer name"
+                    required
+                    bold
+                  />
 
-  {/* LEFT COLUMN */}
-  <div className="bill-info-left">
+                  <InputField
+                    label="Supplier Name"
+                    name="supplierName"
+                    value={header.supplierName}
+                    onChange={handleHeaderChange}
+                    placeholder="Supplier name"
+                  />
+                </div>
 
-    {/* Row 1: Buyer 30% | Supplier 70% */}
-    <div className="row-30-70">
-      <InputField
-        label="Buyer Name"
-        name="buyerName"
-        value={header.buyerName}
-        onChange={handleHeaderChange}
-        placeholder="Buyer name"
-        required
-        bold
-      />
+                {/* Row 2: File No 30% | Invoice No 70% */}
+                <div className="row-30-70">
+                  <InputField
+                    label="File No"
+                    name="fileNo"
+                    value={header.fileNo}
+                    onChange={handleHeaderChange}
+                    placeholder="File No"
+                  />
 
-      <InputField
-        label="Supplier Name"
-        name="supplierName"
-        value={header.supplierName}
-        onChange={handleHeaderChange}
-        placeholder="Supplier name"
-      />
-    </div>
+                  <InputField
+                    label="Invoice No"
+                    name="invoiceNo"
+                    value={header.invoiceNo}
+                    onChange={handleHeaderChange}
+                    placeholder="Invoice No"
+                  />
+                </div>
+              </div>
 
-    {/* Row 2: File No 30% | Invoice No 70% */}
-    <div className="row-30-70">
-      <InputField
-        label="File No"
-        name="fileNo"
-        value={header.fileNo}
-        onChange={handleHeaderChange}
-        placeholder="File No"
-      />
+              {/* RIGHT COLUMN */}
+              <div className="bill-info-right">
+                {/* Row 1: L/C Number 100% */}
+                <InputField
+                  label="L/C Number"
+                  name="lcNumber"
+                  value={header.lcNumber}
+                  onChange={handleHeaderChange}
+                  placeholder="L/C Number"
+                  className="lc-highlight"
+                />
 
-      <InputField
-        label="Invoice No"
-        name="invoiceNo"
-        value={header.invoiceNo}
-        onChange={handleHeaderChange}
-        placeholder="Invoice No"
-      />
-    </div>
+                {/* Row 2: Invoice Date 50% | Billing Date 50% */}
+                <div className="row-50-50">
+                  <InputField
+                    label="Invoice Date"
+                    name="invoiceDate"
+                    type="date"
+                    value={header.invoiceDate}
+                    onChange={handleHeaderChange}
+                  />
 
-  </div>
-
-  {/* RIGHT COLUMN */}
-  <div className="bill-info-right">
-
-    {/* Row 1: L/C Number 100% */}
-    <InputField
-  label="L/C Number"
-  name="lcNumber"
-  value={header.lcNumber}
-  onChange={handleHeaderChange}
-  placeholder="L/C Number"
-  className="lc-highlight"
-/>
-
-
-    {/* Row 2: Invoice Date 50% | Billing Date 50% */}
-    <div className="row-50-50">
-      <InputField
-        label="Invoice Date"
-        name="invoiceDate"
-        type="date"
-        value={header.invoiceDate}
-        onChange={handleHeaderChange}
-      />
-
-      <InputField
-        label="Billing Date"
-        name="billingDate"
-        type="date"
-        value={header.billingDate}
-        onChange={handleHeaderChange}
-        required
-      />
-    </div>
-
-  </div>
-</div>
-
+                  <InputField
+                    label="Billing Date"
+                    name="billingDate"
+                    type="date"
+                    value={header.billingDate}
+                    onChange={handleHeaderChange}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="table-section">
@@ -248,19 +241,20 @@ const App: React.FC = () => {
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ minWidth: "80px" }}>Fabric Code</th>
-                      <th style={{ minWidth: "100x" }}>Item Description</th>
-                      <th style={{ minWidth: "10px" }}>Color & HS Code</th>
-                      <th style={{ minWidth: "40px" }}>Rcvd Date</th>
-                      <th style={{ minWidth: "90px" }}>Challan No</th>
-                      <th style={{ minWidth: "90px" }}>PI Number</th>
+                      <th style={{ minWidth: "220px" }}>
+                        Fabric Code & Description
+                      </th>
+                      <th style={{ minWidth: "100px" }}>Color & HS Code</th>
+                      <th style={{ minWidth: "50px" }}>Rcvd Date</th>
+                      <th style={{ minWidth: "140px" }}>
+                        Challan No & PI Number
+                      </th>
                       <th style={{ minWidth: "50px" }}>Unit</th>
-                      <th style={{ minWidth: "90px" }}>Invoice Qty</th>
-                      <th style={{ minWidth: "90px" }}>Rcvd Qty</th>
-                      <th style={{ minWidth: "90px" }}>Unit Price</th>
+                      <th style={{ minWidth: "90px" }}>Invoice & Rcvd Qty</th>
+                      <th style={{ minWidth: "100px" }}>Unit Price</th>
                       <th style={{ minWidth: "90px" }}>Total Value</th>
                       <th style={{ minWidth: "100px" }}>Appstreme No</th>
-                      <th style={{ minWidth: "50px" }}>Action</th>
+                      <th style={{ minWidth: "30px" }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -271,49 +265,66 @@ const App: React.FC = () => {
                       return (
                         <tr key={item.id}>
                           <td>
-                            {previewMode ? (
-                              <span>{item.fabricCode}</span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={item.fabricCode}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "fabricCode",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Code"
-                              />
-                            )}
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              {previewMode ? (
+                                <>
+                                  <span>Code: {item.fabricCode}</span>
+                                  <span>
+                                    Description: {item.itemDescription}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    value={item.fabricCode}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        item.id,
+                                        "fabricCode",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Code"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={item.itemDescription}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        item.id,
+                                        "itemDescription",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Description"
+                                  />
+                                </>
+                              )}
+                            </div>
                           </td>
-                          <td>
-                            {previewMode ? (
-                              <span>{item.itemDescription}</span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={item.itemDescription}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "itemDescription",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Description"
-                              />
-                            )}
-                          </td>
+
                           <td>
                             {previewMode ? (
                               <span>
-                                {item.color ? `Color: ${item.color}` : ''}<br />
-                                {item.hsCode ? `HS Code: ${item.hsCode}` : ''}
+                                {item.color ? `Color: ${item.color}` : ""}
+                                <br />
+                                {item.hsCode ? `HS Code: ${item.hsCode}` : ""}
                               </span>
                             ) : (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "4px",
+                                }}
+                              >
                                 <input
                                   type="text"
                                   value={item.color}
@@ -325,7 +336,7 @@ const App: React.FC = () => {
                                     )
                                   }
                                   placeholder="Color"
-                                  style={{ width: '100%', minWidth: '80px' }}
+                                  style={{ width: "100%", minWidth: "80px" }}
                                 />
                                 <input
                                   type="text"
@@ -338,7 +349,7 @@ const App: React.FC = () => {
                                     )
                                   }
                                   placeholder="HS Code"
-                                  style={{ width: '100%', minWidth: '80px' }}
+                                  style={{ width: "100%", minWidth: "80px" }}
                                 />
                               </div>
                             )}
@@ -361,41 +372,49 @@ const App: React.FC = () => {
                             )}
                           </td>
                           <td>
-                            {previewMode ? (
-                              <span>{item.challanNo}</span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={item.challanNo}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "challanNo",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="No"
-                              />
-                            )}
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              {previewMode ? (
+                                <>
+                                  <span>Challan No: {item.challanNo}</span>
+                                  <span>PI No: {item.piNumber}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="text"
+                                    value={item.challanNo}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        item.id,
+                                        "challanNo",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Challan No"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={item.piNumber}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        item.id,
+                                        "piNumber",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="PI No"
+                                  />
+                                </>
+                              )}
+                            </div>
                           </td>
-                          <td>
-                            {previewMode ? (
-                              <span>{item.piNumber}</span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={item.piNumber}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "piNumber",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="No"
-                              />
-                            )}
-                          </td>
+
                           <td>
                             {previewMode ? (
                               <span>{item.unit}</span>
@@ -419,47 +438,57 @@ const App: React.FC = () => {
                             )}
                           </td>
                           <td>
-                            {previewMode ? (
-                              <span>
-                                {(Number(item.invoiceQty) || 0).toFixed(2)}
-                              </span>
-                            ) : (
-                              <input
-                                type="number"
-                                value={item.invoiceQty}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "invoiceQty",
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                placeholder="0"
-                                step="0.01"
-                              />
-                            )}
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "0.25rem",
+                              }}
+                            >
+                              {previewMode ? (
+                                <>
+                                  <span>
+                                    Invoice:{" "}
+                                    {(Number(item.invoiceQty) || 0).toFixed(2)}
+                                  </span>
+                                  <span>
+                                    Received:{" "}
+                                    {(Number(item.rcvdQty) || 0).toFixed(2)}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="number"
+                                    value={item.invoiceQty}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        item.id,
+                                        "invoiceQty",
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder="Invoice Qty"
+                                    step="0.01"
+                                  />
+                                  <input
+                                    type="number"
+                                    value={item.rcvdQty}
+                                    onChange={(e) =>
+                                      handleItemChange(
+                                        item.id,
+                                        "rcvdQty",
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                    placeholder="Received Qty"
+                                    step="0.01"
+                                  />
+                                </>
+                              )}
+                            </div>
                           </td>
-                          <td>
-                            {previewMode ? (
-                              <span>
-                                {(Number(item.rcvdQty) || 0).toFixed(2)}
-                              </span>
-                            ) : (
-                              <input
-                                type="number"
-                                value={item.rcvdQty}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "rcvdQty",
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                placeholder="0"
-                                step="0.01"
-                              />
-                            )}
-                          </td>
+
                           <td>
                             {previewMode ? (
                               <span>
