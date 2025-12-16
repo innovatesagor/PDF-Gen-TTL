@@ -87,7 +87,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!header.buyerName.trim()) {
       alert("⚠️ Please enter a Buyer Name.");
       return;
@@ -100,7 +100,12 @@ const App: React.FC = () => {
       alert("⚠️ Please set a billing date.");
       return;
     }
-    generateReports(header, items);
+    try {
+      await generateReports(header, items);
+    } catch (error) {
+      console.error("Error generating reports:", error);
+      alert("❌ Error generating reports. Check console for details.");
+    }
   };
 
   const totals = calculateTotals(items);
