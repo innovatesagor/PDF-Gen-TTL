@@ -10,14 +10,14 @@
     "deploy": "vercel"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "html2pdf.js": "^0.12.1",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.560.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
-    "xlsx": "^0.18.5",
-    "xlsx-js-style": "^0.0.10"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
