@@ -1,9 +1,23 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { ReportHeader, LineItem, Totals } from '../types';
 import { getFilenameDate } from '../utils';
 import { registerPDFFonts, getActiveFontName } from '../fonts';
+
+// Helper to format date for report (DD-Mon-YYYY)
+const formatDateForReport = (dateStr: string): string => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date).replace(/ /g, '-');
+};
 
 // Helper to calculate totals
 export const calculateTotals = (items: LineItem[]): Totals => {
@@ -24,7 +38,7 @@ export const generateReports = async (header: ReportHeader, items: LineItem[]) =
   const baseFilename = `Bill of Buyer ${header.buyerName} $${totalValueStr} DATE-${filenameDate}`;
 
   await generatePDF(header, items, totals, baseFilename);
-  generateExcel(header, items, totals, baseFilename);
+  await generateExcel(header, items, totals, baseFilename);
 };
 
 const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Totals, filename: string) => {
@@ -273,15 +287,34 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   doc.save(`${filename}.pdf`);
 };
 
-const generateExcel = (header: ReportHeader, items: LineItem[], totals: Totals, filename: string) => {
-  const wb = XLSX.utils.book_new();
-  
-  // Pre-process rows 
-  const excelRows = items.map(item => {
+const generateExcel = async (header: ReportHeader, items: LineItem[], totals: Totals, filename: string) => {
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Inventory Report');
+
+  // Prepare data
+  const data: any[] = [
+    ["Tusuka Trousers Ltd."],
+    ["Neelngar, Konabari, Gazipur"],
+    ["Inventory Report"],
+    [],
+    ["Buyer Name :", header.buyerName, "", "", "", "", "", "", "", "", "Invoice Date :", formatDateForReport(header.invoiceDate)],
+    ["Supplier Name:", header.supplierName, "", "", "", "", "", "", "", "", "Billing Date :", formatDateForReport(header.billingDate)],
+    ["File No :", header.fileNo],
+    ["Invoice No :", header.invoiceNo],
+    ["L/C Number :", header.lcNumber],
+    [],
+    [
+      "Fabric Code", "Item Description", "Rcvd Date", "Challan No", "Pi Number", 
+      "Unit", "Invoice Qty", "Rcvd Qty", "Unit Price $", "Total Value", "Appstreme No.\n(Receipt no)"
+    ]
+  ];
+
+  // Add data rows
+  items.forEach(item => {
     const invoiceQty = Number(item.invoiceQty) || 0;
     const rcvdQty = Number(item.rcvdQty) || 0;
     const unitPrice = Number(item.unitPrice) || 0;
-    const totalRowVal = invoiceQty * unitPrice;
+    const totalVal = invoiceQty * unitPrice;
 
     let description = item.itemDescription || '';
     const details = [];
@@ -289,153 +322,197 @@ const generateExcel = (header: ReportHeader, items: LineItem[], totals: Totals, 
     if (item.hsCode && item.hsCode.trim()) details.push(`H.S Code: ${item.hsCode}`);
     if (details.length > 0) description += `\n${details.join(', ')}`;
 
-    return [
-      item.fabricCode, description, item.rcvdDate,
-      item.challanNo, item.piNumber, item.unit,
-      invoiceQty, rcvdQty, unitPrice, totalRowVal, item.appstremeNo
-    ];
+    data.push([
+      item.fabricCode,
+      description,
+      formatDateForReport(item.rcvdDate),
+      item.challanNo,
+      item.piNumber,
+      item.unit,
+      invoiceQty,
+      rcvdQty,
+      unitPrice,
+      totalVal,
+      item.appstremeNo
+    ]);
   });
 
-  const wsData: any[][] = [
-    ["Tusuka Trousers Ltd."],
-    ["Neelngar, Konabari, Gazipur"],
-    ["Inventory Report"],
-    [],
-    ["Buyer Name :", header.buyerName, null, null, null, null, null, "Invoice Date :", header.invoiceDate],
-    ["Supplier Name:", header.supplierName, null, null, null, null, null, "Billing Date :", header.billingDate],
-    ["File No :", header.fileNo],
-    ["Invoice No :", header.invoiceNo],
-    ["L/C Number :", header.lcNumber],
-    [],
-    // Row 10: Header
-    [
-      "Fabric Code", "Item Description", "Rcvd Date", "Challan No", "Pi Number", 
-      "Unit", "Invoice Qty", "Rcvd Qty", "Unit Price $", "Total Value", "Appstreme No.\n(Receipt no)"
-    ]
-  ];
-
-  // Add Item Rows
-  excelRows.forEach(row => wsData.push(row as any[]));
-
-  // Add Footer Row 
-  wsData.push([
-    "", "", "", "", "Total:", "YDS", 
-    totals.totalInvoiceQty, totals.totalRcvdQty, "", totals.totalValue, ""
+  // Add Total row
+  const totalRowIndex = data.length;
+  data.push([
+    "", "", "", "", "Total:", "YDS",
+    totals.totalInvoiceQty,
+    totals.totalRcvdQty,
+    "",
+    totals.totalValue,
+    ""
   ]);
 
-  // Add empty rows for spacing before signature
-  wsData.push([]); 
-  wsData.push([]); 
-  wsData.push([]); 
-  wsData.push([]); 
+  // Add spacing for signatures
+  data.push([]);
+  data.push([]);
+  data.push([]);
+  data.push([]);
 
-  // Add Signature Row
-  const sigRowIndex = wsData.length;
-  const sigRow = new Array(11).fill("");
-  sigRow[1] = "Prepared By";
-  sigRow[9] = "Store In-Charge";
-  wsData.push(sigRow);
+  // Add signature row
+  data.push(["Prepared By", "", "", "", "", "", "", "Store In-Charge", "", "", ""]);
 
-  const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-  // --- Styling Constants ---
-  const thinBorder = {
-    top: { style: "thin", color: { rgb: "000000" } },
-    bottom: { style: "thin", color: { rgb: "000000" } },
-    left: { style: "thin", color: { rgb: "000000" } },
-    right: { style: "thin", color: { rgb: "000000" } }
-  };
-
-  const centerAlign = { horizontal: "center", vertical: "center", wrapText: true };
-  const leftAlign = { horizontal: "left", vertical: "center", wrapText: true };
-  const rightAlign = { horizontal: "right", vertical: "center" };
-
-  const labelStyle = { font: { bold: true }, alignment: { horizontal: "left" } };
-  const headerStyle = {
-    font: { bold: true, sz: 10 },
-    alignment: centerAlign,
-    border: thinBorder,
-    fill: { fgColor: { rgb: "F0F0F0" } } 
-  };
-
-  const dataStyleCenter = { font: { sz: 9 }, alignment: centerAlign, border: thinBorder };
-  const dataStyleLeft = { font: { sz: 9 }, alignment: leftAlign, border: thinBorder };
-  const dataStyleRightCurrency = { font: { sz: 9 }, alignment: rightAlign, border: thinBorder, numFmt: "0.00" };
-  const footerStyle = { font: { bold: true, sz: 10 }, alignment: rightAlign, border: thinBorder, numFmt: "0.00" };
-  const signatureTextStyle = {
-    font: { bold: true, sz: 9 },
-    alignment: { horizontal: "center", vertical: "top" },
-    border: { top: { style: "thin", color: { rgb: "000000" } } }
-  };
-
-  // --- Apply Styles ---
-  ws['A1'].s = { font: { bold: true, sz: 18 }, alignment: { horizontal: "center" } };
-  ws['A2'].s = { font: { sz: 12 }, alignment: { horizontal: "center" } };
-  ws['A3'].s = { font: { bold: true, sz: 14 }, alignment: { horizontal: "center" } };
-
-  const infoRowIndices = [4, 5, 6, 7, 8];
-  infoRowIndices.forEach(r => {
-    const cellRef = XLSX.utils.encode_cell({ r, c: 0 });
-    const cellRef2 = XLSX.utils.encode_cell({ r, c: 7 }); 
-    if(ws[cellRef]) ws[cellRef].s = labelStyle;
-    if(ws[cellRef2]) ws[cellRef2].s = labelStyle;
+  // Add rows to worksheet
+  data.forEach((rowData) => {
+    worksheet.addRow(rowData);
   });
 
-  const headerRowIndex = 10;
-  for(let c = 0; c <= 10; c++) {
-    const cellRef = XLSX.utils.encode_cell({ r: headerRowIndex, c });
-    if(ws[cellRef]) ws[cellRef].s = headerStyle;
-  }
-
-  const startDataRow = 11;
-  const endDataRow = startDataRow + items.length - 1;
-
-  for (let r = startDataRow; r <= endDataRow; r++) {
-    for (let c = 0; c <= 10; c++) {
-      const cellRef = XLSX.utils.encode_cell({ r, c });
-      if (!ws[cellRef]) continue;
-      let style: any = dataStyleCenter;
-      if (c === 1 || c === 10) style = dataStyleLeft; 
-      if (c === 6 || c === 7 || c === 8 || c === 9) style = dataStyleRightCurrency; 
-      ws[cellRef].s = style;
-    }
-  }
-
-  const footerRowIndex = endDataRow + 1;
-  for (let c = 0; c <= 10; c++) {
-    const cellRef = XLSX.utils.encode_cell({ r: footerRowIndex, c });
-    if (!ws[cellRef]) XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: cellRef });
-    let style = { ...footerStyle };
-    if (c === 4) style.alignment = { horizontal: "right", vertical: "center" }; 
-    if (c === 5) style.alignment = { horizontal: "center", vertical: "center" }; 
-    ws[cellRef].s = style;
-  }
-
-  if(!ws['!merges']) ws['!merges'] = [];
-  
-  // Signatures
-  ws['!merges'].push({ s: { r: sigRowIndex, c: 0 }, e: { r: sigRowIndex, c: 2 } });
-  const sigLeftRef = XLSX.utils.encode_cell({ r: sigRowIndex, c: 0 });
-  if (!ws[sigLeftRef]) XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: sigLeftRef });
-  ws[sigLeftRef].v = "Prepared By"; 
-  ws[sigLeftRef].s = signatureTextStyle;
-
-  ws['!merges'].push({ s: { r: sigRowIndex, c: 8 }, e: { r: sigRowIndex, c: 10 } });
-  const sigRightRef = XLSX.utils.encode_cell({ r: sigRowIndex, c: 8 });
-  if (!ws[sigRightRef]) XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: sigRightRef });
-  ws[sigRightRef].v = "Store In-Charge";
-  ws[sigRightRef].s = signatureTextStyle;
-
-  // Title Merges
-  ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 10 } }); 
-  ws['!merges'].push({ s: { r: 1, c: 0 }, e: { r: 1, c: 10 } }); 
-  ws['!merges'].push({ s: { r: 2, c: 0 }, e: { r: 2, c: 10 } }); 
-
-  ws['!cols'] = [
-    { wch: 15 }, { wch: 40 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, 
-    { wch: 6 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
+  // Set column widths
+  worksheet.columns = [
+    { width: 14 }, // Fabric Code
+    { width: 35 }, // Item Description
+    { width: 11 }, // Rcvd Date
+    { width: 12 }, // Challan No
+    { width: 12 }, // Pi Number
+    { width: 8 },  // Unit
+    { width: 12 }, // Invoice Qty
+    { width: 12 }, // Rcvd Qty
+    { width: 12 }, // Unit Price
+    { width: 12 }, // Total Value
+    { width: 14 }  // Appstreme No
   ];
 
-  XLSX.utils.book_append_sheet(wb, ws, "Inventory Report");
-  XLSX.writeFile(wb, `${filename}.xlsx`);
+  // Define border style
+  const thinBorder = {
+    top: { style: 'thin' as const },
+    bottom: { style: 'thin' as const },
+    left: { style: 'thin' as const },
+    right: { style: 'thin' as const }
+  };
+
+  const topBorderOnly = {
+    top: { style: 'thin' as const }
+  };
+
+  // Style all rows
+  worksheet.eachRow((row, rowNumber) => {
+    row.eachCell((cell, colNumber) => {
+      // ROW 1: Company Name - Large Bold Centered
+      if (rowNumber === 1) {
+        cell.font = { bold: true, size: 20 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      }
+      // ROW 2: Address - Centered
+      else if (rowNumber === 2) {
+        cell.font = { size: 11 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      }
+      // ROW 3: Report Title - Bold Centered
+      else if (rowNumber === 3) {
+        cell.font = { bold: true, size: 14 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+      }
+      // ROW 4: Empty - skip
+      else if (rowNumber === 4) {
+        // Skip
+      }
+      // ROWS 5-9: Bill Information - Bold labels + Values
+      else if (rowNumber >= 5 && rowNumber <= 9) {
+        if (colNumber === 1 || colNumber === 11) {
+          // Bold labels
+          cell.font = { bold: true, size: 10 };
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        } else {
+          // Values
+          cell.font = { size: 10 };
+          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+        }
+      }
+      // ROW 10: Empty - skip
+      else if (rowNumber === 10) {
+        // Skip
+      }
+      // ROW 11: Table Headers - Bold with borders
+      else if (rowNumber === 11) {
+        cell.font = { bold: true, size: 10 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        cell.border = thinBorder;
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFFFFF' } };
+      }
+      // DATA ROWS: with borders
+      else if (rowNumber > 11 && rowNumber <= 11 + items.length) {
+        cell.font = { size: 10 };
+        cell.border = thinBorder;
+        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+
+        // Left align description and appstreme no
+        if (colNumber === 2 || colNumber === 11) {
+          cell.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        }
+
+        // Right align and format numbers
+        if (colNumber >= 7 && colNumber <= 10) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          if (colNumber === 9 || colNumber === 10) {
+            cell.numFmt = '0.00';
+          }
+        }
+      }
+      // TOTAL ROW: Bold with borders
+      else if (rowNumber === totalRowIndex + 1) {
+        cell.font = { bold: true, size: 10 };
+        cell.border = thinBorder;
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        if (colNumber === 5) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+
+        if (colNumber >= 7 && colNumber <= 10) {
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          if (colNumber === 9 || colNumber === 10) {
+            cell.numFmt = '0.00';
+          }
+        }
+      }
+      // SIGNATURE ROW: Top border only
+      else if (rowNumber === data.length) {
+        cell.font = { bold: true, size: 10 };
+        cell.alignment = { horizontal: 'center', vertical: 'top' };
+        cell.border = topBorderOnly;
+      }
+    });
+  });
+
+  // Set row heights
+  const sheet = worksheet;
+  if (sheet.getRow(1)) sheet.getRow(1).height = 24;
+  if (sheet.getRow(2)) sheet.getRow(2).height = 16;
+  if (sheet.getRow(3)) sheet.getRow(3).height = 20;
+  if (sheet.getRow(4)) sheet.getRow(4).height = 5;
+  for (let i = 5; i <= 9; i++) {
+    if (sheet.getRow(i)) sheet.getRow(i).height = 16;
+  }
+  if (sheet.getRow(10)) sheet.getRow(10).height = 5;
+  if (sheet.getRow(11)) sheet.getRow(11).height = 18;
+
+  for (let i = 12; i <= 11 + items.length + 1; i++) {
+    if (sheet.getRow(i)) sheet.getRow(i).height = 16;
+  }
+
+  // Merge cells for headers
+  worksheet.mergeCells('A1:K1');
+  worksheet.mergeCells('A2:K2');
+  worksheet.mergeCells('A3:K3');
+
+  // Generate Excel buffer and trigger download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { 
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  });
+  
+  // Create download link
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${filename}.xlsx`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
