@@ -290,7 +290,7 @@ const generateExcel = (header: ReportHeader, items: LineItem[], totals: Totals, 
     if (details.length > 0) description += `\n${details.join(', ')}`;
 
     return [
-      item.fabricCode, description, formatDateForReport(item.rcvdDate),
+      item.fabricCode, description, item.rcvdDate,
       item.challanNo, item.piNumber, item.unit,
       invoiceQty, rcvdQty, unitPrice, totalRowVal, item.appstremeNo
     ];
@@ -301,8 +301,8 @@ const generateExcel = (header: ReportHeader, items: LineItem[], totals: Totals, 
     ["Neelngar, Konabari, Gazipur"],
     ["Inventory Report"],
     [],
-    ["Buyer Name :", header.buyerName, null, null, null, null, null, "Invoice Date :", formatDateForReport(header.invoiceDate)],
-    ["Supplier Name:", header.supplierName, null, null, null, null, null, "Billing Date :", formatDateForReport(header.billingDate)],
+    ["Buyer Name :", header.buyerName, null, null, null, null, null, "Invoice Date :", header.invoiceDate],
+    ["Supplier Name:", header.supplierName, null, null, null, null, null, "Billing Date :", header.billingDate],
     ["File No :", header.fileNo],
     ["Invoice No :", header.invoiceNo],
     ["L/C Number :", header.lcNumber],
