@@ -116,7 +116,7 @@ const App: React.FC = () => {
         <div className="header-top">
           <div className="header-title">
             <div className="header-logo">📊</div>
-            <span>Billing Report Generator</span>
+            <span>Tusuka Inventory Report</span>
           </div>
           <div className="header-subtitle">
             Professional Fabric & Billing Management System
@@ -249,13 +249,12 @@ const App: React.FC = () => {
                   <thead>
                     <tr>
                       <th style={{ minWidth: "80px" }}>Fabric Code</th>
-                      <th style={{ minWidth: "140px" }}>Item Description</th>
-                      <th style={{ minWidth: "80px" }}>Color</th>
-                      <th style={{ minWidth: "80px" }}>HS Code</th>
+                      <th style={{ minWidth: "100x" }}>Item Description</th>
+                      <th style={{ minWidth: "10px" }}>Color & HS Code</th>
                       <th style={{ minWidth: "40px" }}>Rcvd Date</th>
                       <th style={{ minWidth: "90px" }}>Challan No</th>
                       <th style={{ minWidth: "90px" }}>PI Number</th>
-                      <th style={{ minWidth: "60px" }}>Unit</th>
+                      <th style={{ minWidth: "50px" }}>Unit</th>
                       <th style={{ minWidth: "90px" }}>Invoice Qty</th>
                       <th style={{ minWidth: "90px" }}>Rcvd Qty</th>
                       <th style={{ minWidth: "90px" }}>Unit Price</th>
@@ -309,38 +308,39 @@ const App: React.FC = () => {
                           </td>
                           <td>
                             {previewMode ? (
-                              <span>{item.color}</span>
+                              <span>
+                                {item.color ? `Color: ${item.color}` : ''}<br />
+                                {item.hsCode ? `HS Code: ${item.hsCode}` : ''}
+                              </span>
                             ) : (
-                              <input
-                                type="text"
-                                value={item.color}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "color",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="Color"
-                              />
-                            )}
-                          </td>
-                          <td>
-                            {previewMode ? (
-                              <span>{item.hsCode}</span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={item.hsCode}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "hsCode",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="HS Code"
-                              />
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <input
+                                  type="text"
+                                  value={item.color}
+                                  onChange={(e) =>
+                                    handleItemChange(
+                                      item.id,
+                                      "color",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="Color"
+                                  style={{ width: '100%', minWidth: '80px' }}
+                                />
+                                <input
+                                  type="text"
+                                  value={item.hsCode}
+                                  onChange={(e) =>
+                                    handleItemChange(
+                                      item.id,
+                                      "hsCode",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="HS Code"
+                                  style={{ width: '100%', minWidth: '80px' }}
+                                />
+                              </div>
                             )}
                           </td>
                           <td>
