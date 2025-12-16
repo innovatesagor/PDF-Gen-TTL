@@ -389,20 +389,27 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
     top: { style: 'thin' as const }
   };
 
+  const noBorder = {
+    top: undefined,
+    bottom: undefined,
+    left: undefined,
+    right: undefined
+  };
+
   // Style all rows
   worksheet.eachRow((row, rowNumber) => {
     row.eachCell((cell, colNumber) => {
-      // ROW 1: Company Name - Large Bold Centered
+      // ROW 1: Company Name - Large Bold Centered (NO BORDER)
       if (rowNumber === 1) {
         cell.font = { bold: true, size: 20 };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
       }
-      // ROW 2: Address - Centered
+      // ROW 2: Address - Centered (NO BORDER)
       else if (rowNumber === 2) {
         cell.font = { size: 11 };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
       }
-      // ROW 3: Report Title - Bold Centered
+      // ROW 3: Report Title - Bold Centered (NO BORDER)
       else if (rowNumber === 3) {
         cell.font = { bold: true, size: 14 };
         cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
@@ -411,7 +418,7 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
       else if (rowNumber === 4) {
         // Skip
       }
-      // ROWS 5-9: Bill Information - Bold labels + Values
+      // ROWS 5-9: Bill Information - Bold labels + Values (NO BORDER)
       else if (rowNumber >= 5 && rowNumber <= 9) {
         if (colNumber === 1 || colNumber === 11) {
           // Bold labels
@@ -470,11 +477,16 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
           }
         }
       }
-      // SIGNATURE ROW: Top border only
+      // SIGNATURE ROW: Top border only on specific cells
       else if (rowNumber === data.length) {
         cell.font = { bold: true, size: 10 };
         cell.alignment = { horizontal: 'center', vertical: 'top' };
-        cell.border = topBorderOnly;
+        
+        // Add top border only to cells with content (Prepared By and Store In-Charge)
+        if (colNumber === 1 || colNumber === 8) {
+          cell.border = topBorderOnly;
+        }
+        // No border for empty cells
       }
     });
   });
