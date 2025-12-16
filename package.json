@@ -16,7 +16,8 @@
     "lucide-react": "^0.560.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^0.0.10"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
