@@ -54,7 +54,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   const headerY = 8;
   const titleY = 20;
   const infoBlockY = 26;
-  const lineHeight = 2.5;
+  const lineHeight = 4;
   
   // Signature Area Config
   const signatureHeight = 15; 
