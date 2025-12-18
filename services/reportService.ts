@@ -54,7 +54,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   const headerY = 10;
   const titleY = 20;
   const infoBlockY = 26;
-  const lineHeight = 4;
+  const lineHeight = 6;
   
   // Signature Area Config
   const signatureHeight = 10; 
@@ -90,7 +90,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
 
   doc.setFontSize(15);
   doc.setFont(fontName, 'bold');
-  doc.text("Inventory Report", pageWidth / 2, titleY, { align: 'center' });
+  doc.text("Inventory Report", pageWidth / 2, titleY + 2, { align: 'center' });
 
   // --- Info Block ---
   const drawLabelVal = (label: string, val: string, x: number, y: number) => {
