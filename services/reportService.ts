@@ -130,7 +130,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   ]);
 
   tableRows.push([
-    "", "TOTAL", "", "", "", "",
+    "", "", "", "", "", "TOTAL",
     totals.totalInvoiceQty.toLocaleString(undefined, { minimumFractionDigits: 2 }),
     totals.totalRcvdQty.toLocaleString(undefined, { minimumFractionDigits: 2 }),
     "",
