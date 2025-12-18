@@ -116,10 +116,9 @@ const App: React.FC = () => {
         <div className="header-top">
           <div className="header-title">
             <div className="header-logo">📊</div>
-            <span>Tusuka Inventory Report</span>
+            <span>Billing Report Generator</span>
           </div>
-          <div className="header-subtitle">
-            Professional Fabric & Billing Management System
+          <div className="header-subtitle">Billing Management System
           </div>
         </div>
       </header>
