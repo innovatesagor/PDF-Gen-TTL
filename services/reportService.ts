@@ -125,7 +125,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   // --- Table Preparation ---
   const tableColumn = [
     "Fabric Code", "Item Description", "Rcvd Date", "Challan No", 
-    "Pi Number", "Unit", "Inv Qty", "Rcvd Qty", "Price ($)", "Total Value", "Appstreme No"
+    "Pi Number", "Unit", "Invoice Qty", "Rcvd Qty", "Price ($)", "Total Value", "Appstreme No"
   ];
 
   const tableRows = items.map(item => {
