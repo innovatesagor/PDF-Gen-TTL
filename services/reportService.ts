@@ -146,30 +146,36 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
     margin: { left: marginX, right: marginX },
     styles: {
       fontSize: fontSize,
+      textColor: [0, 0, 0],     // <--- Forces all body text to Black
       cellPadding: cellPadding,
       halign: 'center',
       valign: 'middle',
       minCellHeight: rowHeight,
-      lineColor: [0, 0, 0],
+      lineColor: [0, 0, 0],     // Borders are Black
       lineWidth: 0.1,
       overflow: 'linebreak'
     },
-    headStyles: { fillColor: [245, 245, 245], textColor: [0, 0, 0], fontStyle: 'bold' },
+    headStyles: { 
+      fillColor: [245, 245, 245], 
+      textColor: [0, 0, 0],     // <--- Forces Header text to Black
+      fontStyle: 'bold' 
+    },
     columnStyles: {
-      0: { cellWidth: 25 }, // Fabric Code
-      1: { cellWidth: 'auto', halign: 'left' }, // Description
-      2: { cellWidth: 24 }, // Rcvd Date (Ensures enough width for DD-MMM-YYYY)
-      6: { cellWidth: 20 }, // Inv Qty
-      7: { cellWidth: 20 }, // Rcvd Qty
-      8: { cellWidth: 18 }, // Price
-      9: { cellWidth: 22 }, // Total Value
+      0: { cellWidth: 25 },
+      1: { cellWidth: 'auto', halign: 'left' },
+      2: { cellWidth: 24 },
+      6: { cellWidth: 20 },
+      7: { cellWidth: 20 },
+      8: { cellWidth: 18 },
+      9: { cellWidth: 22 },
     },
     didParseCell: (data) => {
       if (data.row.index === tableRows.length - 1) {
         data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.textColor = [0, 0, 0]; // Explicitly ensure footer is black
       }
     }
-  });
+});
 
   // --- Signatures ---
   doc.setLineWidth(0.3);
