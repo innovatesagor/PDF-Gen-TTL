@@ -51,7 +51,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
 
   // --- Layout Constants ---
   const marginX = 10;
-  const headerY = 8;
+  const headerY = 10;
   const titleY = 20;
   const infoBlockY = 26;
   const lineHeight = 4;
