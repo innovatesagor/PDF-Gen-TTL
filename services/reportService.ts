@@ -252,15 +252,11 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
     ""
   ]);
 
-  // Add spacing for signatures
-  data.push([]);
-  data.push([]);
-  data.push([]);
-  data.push([]);
-  data.push([]);
+  // Add more empty rows for a larger gap (approx. 3 rows height)
+  data.push([], [], [], [], [], [], [], []);
 
   // Add signature row
-  data.push(["Prepared By", "", "", "", "", "", "",  "", "","Store In-Charge", ""]);
+  data.push(["Prepared By", "", "", "", "", "", "", "", "", "Store In-Charge", ""]);
 
   // Add rows to worksheet
   data.forEach((rowData) => {
@@ -398,19 +394,34 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
 
   // Set row heights
   const sheet = worksheet;
-  if (sheet.getRow(1)) sheet.getRow(1).height = 24;
-  if (sheet.getRow(2)) sheet.getRow(2).height = 16;
-  if (sheet.getRow(3)) sheet.getRow(3).height = 20;
-  if (sheet.getRow(4)) sheet.getRow(4).height = 5;
-  for (let i = 5; i <= 9; i++) {
-    if (sheet.getRow(i)) sheet.getRow(i).height = 16;
-  }
-  if (sheet.getRow(10)) sheet.getRow(10).height = 5;
-  if (sheet.getRow(11)) sheet.getRow(11).height = 18;
+  // 1. First, handle specific heights for headers
+if (sheet.getRow(1)) sheet.getRow(1).height = 24;
+if (sheet.getRow(2)) sheet.getRow(2).height = 16;
+if (sheet.getRow(3)) sheet.getRow(3).height = 20;
+if (sheet.getRow(4)) sheet.getRow(4).height = 5;
 
-  for (let i = 12; i <= 11 + items.length + 1; i++) {
-    if (sheet.getRow(i)) sheet.getRow(i).height = 16;
+// 2. Handle Info Block
+for (let i = 5; i <= 9; i++) {
+  if (sheet.getRow(i)) sheet.getRow(i).height = 16;
+}
+if (sheet.getRow(10)) sheet.getRow(10).height = 5;
+
+// 3. Handle Table Header
+if (sheet.getRow(11)) sheet.getRow(11).height = 18;
+
+// 4. Handle EVERYTHING from Table Data down to the Signature
+// We use worksheet.rowCount to ensure all rows (including spacers) get height
+for (let i = 12; i <= worksheet.rowCount; i++) {
+  const row = sheet.getRow(i);
+  if (row) {
+    // If it's the signature row (the very last one), give it a bit more space
+    if (i === worksheet.rowCount) {
+      row.height = 20;
+    } else {
+      row.height = 16; // Standard height for data and empty spacer rows
+    }
   }
+}
 
   // Merge cells for headers
   worksheet.mergeCells('A1:K1');
