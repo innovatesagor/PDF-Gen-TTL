@@ -46,71 +46,51 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Register custom fonts
   await registerPDFFonts(doc);
   const fontName = getActiveFontName();
 
+  // --- Date Formatter Helper ---
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr; // Return original if invalid
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
   // --- Layout Constants ---
+  const marginX = 10; // Reduced margin for more width
   const headerY = 12;
   const addressY = 18;
   const titleY = 25;
-  
   const infoBlockY = 32;
   const lineHeight = 5;
-  const infoBlockHeight = lineHeight * 4; // 4 lines of details
+  const infoBlockHeight = lineHeight * 5; 
+  const tableStartY = infoBlockY + infoBlockHeight + 2;
   
-  const tableStartY = infoBlockY + infoBlockHeight + 4;
-  
-  // Signature Block Constants - FIXED AT BOTTOM WITH GAP
-  const signatureGapSize = 35; // Large gap before signatures (in mm)
-  const signatureHeight = 20; // Height reserved for signature lines/text
+  const signatureHeight = 20;
   const bottomMargin = 8;
   const signatureBlockY = pageHeight - signatureHeight - bottomMargin;
-  
-  // Calculate available height for the table (with generous gap before signatures)
-  const maxTableHeight = signatureBlockY - tableStartY - signatureGapSize;
-  
-  // --- Dynamic Layout Logic for Single Page ---
-  // Rows = Header(1) + Items(n) + Footer(1)
-  const rowCount = items.length + 2; 
-  
-  // Default styling - OPTIMIZED FOR SINGLE PAGE
+  const maxTableHeight = signatureBlockY - tableStartY - 25;
+
+  // --- Dynamic Row Logic ---
+  const rowCount = items.length + 1; 
   let finalFontSize = 8;
-  let finalCellPadding = 1.5;
   let finalMinCellHeight = 6;
 
-  // DYNAMIC ROW HEIGHT LOGIC:
-  // - If fewer rows: Make them TALLER for better readability
-  // - If more rows: Shrink proportionally while keeping signature gap
-  
-  if (rowCount <= 5) {
-    // Few rows - EXPAND to fill space nicely
-    finalMinCellHeight = maxTableHeight / rowCount; // Distribute all available space
-    finalFontSize = 10;
-    finalCellPadding = 2;
-  } else if (rowCount <= 15) {
-    // Medium rows - COMFORTABLE sizing
-    finalMinCellHeight = Math.max(8, maxTableHeight / rowCount);
+  if (rowCount <= 10) {
+    finalMinCellHeight = 10;
     finalFontSize = 9;
-    finalCellPadding = 1.75;
-  } else if (rowCount <= 25) {
-    // Many rows - COMPACT sizing
-    finalMinCellHeight = Math.max(6, maxTableHeight / rowCount);
-    finalFontSize = 8;
-    finalCellPadding = 1.5;
-  } else {
-    // Very many rows - MINIMAL sizing (keep signature gap)
-    finalMinCellHeight = Math.max(5, maxTableHeight / rowCount);
+  } else if (rowCount > 25) {
     finalFontSize = 7;
-    finalCellPadding = 1;
+    finalMinCellHeight = 5;
   }
 
-  // Ensure minimum readability
-  finalFontSize = Math.max(5, finalFontSize);
-  finalMinCellHeight = Math.max(5, finalMinCellHeight);
-
-  // --- Draw Static Header Content ---
-  doc.setFontSize(18);
+  // --- Static Header ---
+  doc.setFontSize(16);
   doc.setFont(fontName, 'bold');
   doc.text("Tusuka Trousers Ltd.", pageWidth / 2, headerY, { align: 'center' });
   
@@ -118,175 +98,121 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   doc.setFont(fontName, 'normal');
   doc.text("Neelngar, Konabari, Gazipur", pageWidth / 2, addressY, { align: 'center' });
 
-  doc.setFontSize(12);
-  doc.setFont(fontName, 'bold');
+  doc.setFontSize(11);
   doc.text("Inventory Report", pageWidth / 2, titleY, { align: 'center' });
 
-  // --- Info Block with Totals on Right ---
-  const leftX = 14;
-  const rightX = pageWidth - 75;
+  // --- Info Block ---
+  const leftX = marginX;
+  const rightX = pageWidth - 85;
 
-  doc.setFontSize(8);
-  
-  // Helper to draw label: value pair
   const drawLabelVal = (label: string, val: string, x: number, y: number) => {
     doc.setFont(fontName, 'bold'); doc.text(label, x, y);
-    doc.setFont(fontName, 'normal'); doc.text(val || '', x + 32, y);
+    doc.setFont(fontName, 'normal'); doc.text(val || '', x + 30, y);
   };
 
   drawLabelVal("Buyer Name :", header.buyerName, leftX, infoBlockY);
   drawLabelVal("Supplier Name:", header.supplierName, leftX, infoBlockY + lineHeight);
   drawLabelVal("File No :", header.fileNo, leftX, infoBlockY + lineHeight * 2);
   drawLabelVal("Invoice No :", header.invoiceNo, leftX, infoBlockY + lineHeight * 3);
-
-  // Right Column - Dates and Totals
-  doc.setFont(fontName, 'normal'); doc.text("Invoice Date:", rightX, infoBlockY);
-  doc.setFont(fontName, 'normal'); doc.text(header.invoiceDate || '', rightX + 28, infoBlockY);
-
-  doc.setFont(fontName, 'normal'); doc.text("Billing Date:", rightX, infoBlockY + lineHeight);
-  doc.setFont(fontName, 'normal'); doc.text(header.billingDate || '', rightX + 28, infoBlockY + lineHeight);
-
-  // L/C Number on left side
   drawLabelVal("L/C Number :", header.lcNumber, leftX, infoBlockY + lineHeight * 4);
 
-  // --- Table Data Preparation ---
+  doc.setFont(fontName, 'bold'); doc.text("Invoice Date:", rightX, infoBlockY);
+  doc.setFont(fontName, 'normal'); doc.text(formatDate(header.invoiceDate), rightX + 25, infoBlockY);
+
+  doc.setFont(fontName, 'bold'); doc.text("Billing Date:", rightX, infoBlockY + lineHeight);
+  doc.setFont(fontName, 'normal'); doc.text(formatDate(header.billingDate), rightX + 25, infoBlockY + lineHeight);
+
+  // --- Table Preparation ---
   const tableColumn = [
-    "Fabric Code", 
-    "Item Description", 
-    "Rcvd Date", 
-    "Challan No", 
-    "Pi Number", 
-    "Unit", 
-    "Invoice Qty", 
-    "Rcvd Qty", 
-    "Unit Price $", 
-    "Total Value", 
-    "Appstreme No.\n(Receipt no)"
+    "Fabric Code", "Item Description", "Rcvd Date", "Challan No", 
+    "Pi Number", "Unit", "Inv Qty", "Rcvd Qty", "Price ($)", "Total Value", "Appstreme No"
   ];
 
   const tableRows = items.map(item => {
-    // FIX: Safely cast to numbers
     const invoiceQty = Number(item.invoiceQty) || 0;
     const rcvdQty = Number(item.rcvdQty) || 0;
     const unitPrice = Number(item.unitPrice) || 0;
-    const totalRowVal = invoiceQty * unitPrice;
-
-    // Build Description Conditionally
+    
     let description = item.itemDescription || '';
     const details = [];
-    if (item.color && item.color.trim()) details.push(`Color: ${item.color}`);
-    if (item.hsCode && item.hsCode.trim()) details.push(`H.S Code: ${item.hsCode}`);
-    
-    if (details.length > 0) {
-      description += `\n${details.join(', ')}`;
-    }
+    if (item.color?.trim()) details.push(`Color: ${item.color}`);
+    if (item.hsCode?.trim()) details.push(`HS: ${item.hsCode}`);
+    if (details.length > 0) description += `\n(${details.join(', ')})`;
 
     return [
       item.fabricCode,
       description,
-      item.rcvdDate,
+      formatDate(item.rcvdDate),
       item.challanNo,
       item.piNumber,
       item.unit,
-      invoiceQty,
-      rcvdQty,
+      invoiceQty.toLocaleString(undefined, {minimumFractionDigits: 2}),
+      rcvdQty.toLocaleString(undefined, {minimumFractionDigits: 2}),
       unitPrice.toFixed(2),
-      totalRowVal.toFixed(2),
+      (invoiceQty * unitPrice).toLocaleString(undefined, {minimumFractionDigits: 2}),
       item.appstremeNo
     ];
   });
 
-  // Footer row with totals - PROFESSIONAL STYLING
-  const footerRow = [
-    "", "", "", "", "", "TOTAL:", 
-    totals.totalInvoiceQty.toFixed(2),
-    totals.totalRcvdQty.toFixed(2),
+  tableRows.push(["", "", "", "", "", "TOTAL:", 
+    totals.totalInvoiceQty.toLocaleString(undefined, {minimumFractionDigits: 2}),
+    totals.totalRcvdQty.toLocaleString(undefined, {minimumFractionDigits: 2}),
     "",
-    totals.totalValue.toFixed(2),
+    totals.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2}),
     ""
-  ];
-  tableRows.push(footerRow);
+  ]);
 
-  // --- AutoTable Generation with Professional Styling ---
   autoTable(doc, {
     startY: tableStartY,
     head: [tableColumn],
     body: tableRows,
     theme: 'grid',
+    margin: { left: marginX, right: marginX },
     styles: {
       font: 'helvetica',
       fontSize: finalFontSize,
-      cellPadding: finalCellPadding,
-      overflow: 'linebreak',
+      cellPadding: 1.2,
       halign: 'center',
       valign: 'middle',
       minCellHeight: finalMinCellHeight,
-      lineColor: [0, 0, 0], // Black border
-      lineWidth: 0.3
+      lineColor: [0, 0, 0],
+      lineWidth: 0.2
     },
-    headStyles: {
-      fillColor: [255, 255, 255], // White background
-      textColor: [0, 0, 0], // Black text
-      fontStyle: 'bold',
-      fontSize: finalFontSize,
-      halign: 'center',
-      valign: 'middle',
-      lineColor: [0, 0, 0], // Black border
-      lineWidth: 0.4
-    },
-    bodyStyles: {
-      fillColor: [255, 255, 255], // White background
-      textColor: [0, 0, 0], // Black text
-      lineColor: [0, 0, 0], // Black border
-      lineWidth: 0.3,
-    },
+    headStyles: { fillColor: [240, 240, 240], textColor: [0, 0, 0], fontStyle: 'bold' },
     columnStyles: {
-      1: { cellWidth: 40, halign: 'left' } // Description column
+      0: { cellWidth: 25 }, // Fabric Code
+      1: { cellWidth: 'auto', halign: 'left' }, // Description takes remaining space
+      2: { cellWidth: 22 }, // Date
+      6: { cellWidth: 20 }, // Inv Qty
+      7: { cellWidth: 20 }, // Rcvd Qty
+      8: { cellWidth: 18 }, // Unit Price
+      9: { cellWidth: 22 }, // Total Value
     },
     didParseCell: (data) => {
-      // Style the total row - BOLD without background color
       if (data.row.index === tableRows.length - 1) {
         data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.fillColor = [255, 255, 255]; // White background
-        data.cell.styles.textColor = [0, 0, 0]; // Black text
-        data.cell.styles.lineWidth = 0.4;
       }
-      // No alternate row colors - all white
-      if (data.row.index % 2 === 0 && data.row.index !== tableRows.length - 1) {
-        data.cell.styles.fillColor = [255, 255, 255]; // White background
-        data.cell.styles.textColor = [0, 0, 0]; // Black text
-      }
-    },
+    }
   });
 
-  // --- Signatures with Large Gap ---
-  // Place signature block at fixed position at bottom with significant gap
-  
+  // --- Signature Block ---
   let sigY = signatureBlockY;
   const lastTableY = (doc as any).lastAutoTable.finalY;
 
-  // If table overlaps with signature area, add a new page
-  if (lastTableY > signatureBlockY - 10) {
-      doc.addPage();
-      sigY = signatureBlockY; 
+  if (lastTableY > signatureBlockY - 5) {
+    doc.addPage();
+    sigY = signatureBlockY; 
   }
 
-  // Draw signature lines with gap area above
   doc.setLineWidth(0.3);
-  
-  // Left Sig - "Prepared By"
-  doc.line(20, sigY, 70, sigY);
-  doc.setFontSize(8);
-  doc.setFont(fontName, 'bold');
-  doc.text("Prepared By", 30, sigY + 4);
+  doc.line(marginX + 10, sigY, marginX + 60, sigY);
+  doc.text("Prepared By", marginX + 20, sigY + 5);
 
-  // Right Sig - "Store In-Charge"
-  doc.line(pageWidth - 70, sigY, pageWidth - 20, sigY);
-  doc.text("Store In-Charge", pageWidth - 65, sigY + 4);
+  doc.line(pageWidth - marginX - 60, sigY, pageWidth - marginX - 10, sigY);
+  doc.text("Store In-Charge", pageWidth - marginX - 52, sigY + 5);
 
   doc.save(`${filename}.pdf`);
 };
-
 const generateExcel = async (header: ReportHeader, items: LineItem[], totals: Totals, filename: string) => {
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet('Inventory Report');
