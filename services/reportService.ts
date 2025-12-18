@@ -51,15 +51,15 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
 
   // --- Layout Constants ---
   const marginX = 10;
-  const headerY = 12;
-  const titleY = 25;
-  const infoBlockY = 32;
-  const lineHeight = 5;
+  const headerY = 8;
+  const titleY = 20;
+  const infoBlockY = 26;
+  const lineHeight = 2.5;
   
   // Signature Area Config
   const signatureHeight = 15; 
   const bottomMargin = 10;
-  const signatureGap = 20; // Forced gap between table and signatures
+  const signatureGap = 25; // Forced gap between table and signatures
   const signatureBlockY = pageHeight - signatureHeight - bottomMargin;
   
   const tableStartY = infoBlockY + (lineHeight * 5) + 5;
