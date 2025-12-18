@@ -58,11 +58,11 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   
   // Signature Area Config
   const signatureHeight = 10; 
-  const bottomMargin = 2;
+  const bottomMargin = 5;
   const signatureGap = 25; // Forced gap between table and signatures
   const signatureBlockY = pageHeight - signatureHeight - bottomMargin;
   
-  const tableStartY = infoBlockY + (lineHeight * 5) + 2;
+  const tableStartY = infoBlockY + (lineHeight * 5) + 4;
   
   // Calculate available vertical space for the table to keep it on one page
   const availableTableHeight = signatureBlockY - tableStartY - signatureGap;
@@ -112,7 +112,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
   // --- Table Content ---
   const tableColumn = [
     "Fabric Code", "Item Description", "Rcvd Date", "Challan No", 
-    "Pi Number", "Unit", "Invoice Qty", "Rcvd Qty", "Price ($)", "Total Value", "Appstreme No"
+    "Pi Number", "Unit", "Invoice Qty", "Rcvd Qty", "Unit Price ($)", "Total Value", "Appstreme No"
   ];
 
   const tableRows = items.map(item => [
