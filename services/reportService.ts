@@ -81,14 +81,14 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
 
   // --- Draw Headers ---
   doc.setFont(fontName, 'bold');
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.text("Tusuka Trousers Ltd.", pageWidth / 2, headerY, { align: 'center' });
   
-  doc.setFontSize(8);
+  doc.setFontSize(10);
   doc.setFont(fontName, 'normal');
   doc.text("Neelngar, Konabari, Gazipur", pageWidth / 2, headerY + 6, { align: 'center' });
 
-  doc.setFontSize(12);
+  doc.setFontSize(15);
   doc.setFont(fontName, 'bold');
   doc.text("Inventory Report", pageWidth / 2, titleY, { align: 'center' });
 
