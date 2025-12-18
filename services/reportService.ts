@@ -253,7 +253,7 @@ const generateExcel = async (header: ReportHeader, items: LineItem[], totals: To
   ]);
 
   // Add more empty rows for a larger gap (approx. 3 rows height)
-  data.push([], [], [], [], [], [], [], []);
+  data.push([], [], [], [], [], [], []);
 
   // Add signature row
   data.push(["Prepared By", "", "", "", "", "", "", "", "", "Store In-Charge", ""]);
