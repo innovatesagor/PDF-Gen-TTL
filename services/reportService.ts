@@ -138,44 +138,49 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
     ""
   ]);
 
-  autoTable(doc, {
+autoTable(doc, {
     startY: tableStartY,
     head: [tableColumn],
     body: tableRows,
     theme: 'grid',
-    margin: { left: marginX, right: marginX },
+    // 1. Ensure table respects the margins
+    tableWidth: 'auto', 
+    margin: { left: marginX, right: marginX }, 
     styles: {
       fontSize: fontSize,
-      textColor: [0, 0, 0],     // <--- Forces all body text to Black
+      textColor: [0, 0, 0],
       cellPadding: cellPadding,
       halign: 'center',
       valign: 'middle',
       minCellHeight: rowHeight,
-      lineColor: [0, 0, 0],     // Borders are Black
+      lineColor: [0, 0, 0],
       lineWidth: 0.1,
       overflow: 'linebreak'
     },
     headStyles: { 
       fillColor: [245, 245, 245], 
-      textColor: [0, 0, 0],     // <--- Forces Header text to Black
+      textColor: [0, 0, 0], 
       fontStyle: 'bold' 
     },
+    // 2. KEY FIX: Use 'auto' for variable width columns
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 'auto', halign: 'left' },
-      2: { cellWidth: 24 },
-      6: { cellWidth: 20 },
-      7: { cellWidth: 20 },
-      8: { cellWidth: 18 },
-      9: { cellWidth: 22 },
+      0: { cellWidth: 28 },               // Fabric Code (Slightly wider)
+      1: { cellWidth: 'auto', halign: 'left' }, // Item Description -> 'auto' allows it to stretch to fill the page
+      2: { cellWidth: 24 },               // Rcvd Date
+      // 3, 4, 5 (Challan, Pi, Unit) left as default/auto or define if strictly needed
+      6: { cellWidth: 22 },               // Invoice Qty
+      7: { cellWidth: 22 },               // Rcvd Qty
+      8: { cellWidth: 20 },               // Unit Price
+      9: { cellWidth: 25 },               // Total Value
+      10: { cellWidth: 25 },              // Appstreme No
     },
     didParseCell: (data) => {
       if (data.row.index === tableRows.length - 1) {
         data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.textColor = [0, 0, 0]; // Explicitly ensure footer is black
+        data.cell.styles.textColor = [0, 0, 0];
       }
     }
-});
+  });
 
   // --- Signatures ---
   doc.setLineWidth(0.3);
