@@ -33,7 +33,11 @@ export const calculateTotals = (items: LineItem[]): Totals => {
 
 export const generateReports = async (header: ReportHeader, items: LineItem[]) => {
   const totals = calculateTotals(items);
-  const totalValueStr = Math.round(totals.totalValue); 
+  // Current line that keeps decimals:
+  const totalValueStr = totals.totalValue.toFixed(2); 
+  
+  // If you wanted to round it again (like it was before), you would change it to:
+  // const totalValueStr = Math.round(totals.totalValue);
   const filenameDate = getFilenameDate(header.billingDate);
   const baseFilename = `Bill of Buyer ${header.buyerName} $${totalValueStr} DATE-${filenameDate}`;
 
@@ -90,7 +94,7 @@ const generatePDF = async (header: ReportHeader, items: LineItem[], totals: Tota
 
   doc.setFontSize(15);
   doc.setFont(fontName, 'bold');
-  doc.text("Inventory Report", pageWidth / 2, titleY + 2, { align: 'center' });
+  doc.text("Bill Of Exchange Report", pageWidth / 2, titleY + 2, { align: 'center' });
 
   // --- Info Block ---
   const drawLabelVal = (label: string, val: string, x: number, y: number) => {
@@ -198,13 +202,13 @@ autoTable(doc, {
 
 const generateExcel = async (header: ReportHeader, items: LineItem[], totals: Totals, filename: string) => {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Inventory Report');
+  const worksheet = workbook.addWorksheet('Bill Of Exchange Report');
 
   // Prepare data
   const data: any[] = [
     ["Tusuka Trousers Ltd."],
     ["Neelngar, Konabari, Gazipur"],
-    ["Inventory Report"],
+    ["Bill Of Exchange Report"],
     [],
     ["Buyer Name :", header.buyerName, "", "", "", "", "", "", "", "Invoice Date :", formatDateForReport(header.invoiceDate)],
     ["Supplier Name:", header.supplierName, "", "", "", "", "", "", "", "Billing Date :", formatDateForReport(header.billingDate)],
