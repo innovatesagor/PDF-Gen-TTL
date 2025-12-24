@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { FileText, Plus, Trash2, Download, Eye } from "lucide-react";
 import { ReportHeader, LineItem } from "./types";
@@ -34,6 +35,30 @@ const App: React.FC = () => {
   ]);
 
   const [previewMode, setPreviewMode] = useState(false);
+
+  // Global "Enter as Tab" navigation logic
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        const target = e.target as HTMLElement;
+        // Check if we are in an input or select
+        if (target.tagName === "INPUT" || target.tagName === "SELECT") {
+          e.preventDefault();
+          const formElements = Array.from(
+            document.querySelectorAll('input:not([type="hidden"]), select, button:not([disabled])')
+          ) as HTMLElement[];
+          
+          const index = formElements.indexOf(target);
+          if (index > -1 && index < formElements.length - 1) {
+            formElements[index + 1].focus();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
 
   useEffect(() => {
     const today = new Date();
@@ -116,10 +141,9 @@ const App: React.FC = () => {
         <div className="header-top">
           <div className="header-title">
             <div className="header-logo">📊</div>
-            <span>Billing Report Generator</span>
+            <span>Bill Of Exchange Report Generator</span>
           </div>
-          <div className="header-subtitle">Billing Management System
-          </div>
+          <div className="header-subtitle">Tusuka Jeans Ltd. Management System</div>
         </div>
       </header>
 
@@ -132,9 +156,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="bill-info-container">
-              {/* LEFT COLUMN */}
               <div className="bill-info-left">
-                {/* Row 1: Buyer 30% | Supplier 70% */}
                 <div className="row-30-70">
                   <InputField
                     label="Buyer Name"
@@ -155,7 +177,6 @@ const App: React.FC = () => {
                   />
                 </div>
 
-                {/* Row 2: File No 30% | Invoice No 70% */}
                 <div className="row-30-70">
                   <InputField
                     label="File No"
@@ -175,9 +196,7 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* RIGHT COLUMN */}
               <div className="bill-info-right">
-                {/* Row 1: L/C Number 100% */}
                 <InputField
                   label="L/C Number"
                   name="lcNumber"
@@ -187,7 +206,6 @@ const App: React.FC = () => {
                   className="lc-highlight"
                 />
 
-                {/* Row 2: Invoice Date 50% | Billing Date 50% */}
                 <div className="row-50-50">
                   <InputField
                     label="Invoice Date"
@@ -195,6 +213,8 @@ const App: React.FC = () => {
                     type="date"
                     value={header.invoiceDate}
                     onChange={handleHeaderChange}
+                    min="1000-01-01"
+                    max="9999-12-31"
                   />
 
                   <InputField
@@ -204,6 +224,8 @@ const App: React.FC = () => {
                     value={header.billingDate}
                     onChange={handleHeaderChange}
                     required
+                    min="1000-01-01"
+                    max="9999-12-31"
                   />
                 </div>
               </div>
@@ -240,14 +262,10 @@ const App: React.FC = () => {
                 <table>
                   <thead>
                     <tr>
-                      <th style={{ minWidth: "220px" }}>
-                        Fabric Code & Description
-                      </th>
+                      <th style={{ minWidth: "220px" }}>Fabric Code & Description</th>
                       <th style={{ minWidth: "100px" }}>Color & HS Code</th>
                       <th style={{ minWidth: "50px" }}>Rcvd Date</th>
-                      <th style={{ minWidth: "140px" }}>
-                        Challan No & PI Number
-                      </th>
+                      <th style={{ minWidth: "140px" }}>Challan No & PI Number</th>
                       <th style={{ minWidth: "50px" }}>Unit</th>
                       <th style={{ minWidth: "90px" }}>Invoice & Rcvd Qty</th>
                       <th style={{ minWidth: "100px" }}>Unit Price</th>
@@ -258,289 +276,83 @@ const App: React.FC = () => {
                   </thead>
                   <tbody>
                     {items.map((item) => {
-                      const itemTotal =
-                        (Number(item.invoiceQty) || 0) *
-                        (Number(item.unitPrice) || 0);
+                      const itemTotal = (Number(item.invoiceQty) || 0) * (Number(item.unitPrice) || 0);
                       return (
                         <tr key={item.id}>
                           <td>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.25rem",
-                              }}
-                            >
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                               {previewMode ? (
                                 <>
                                   <span>Code: {item.fabricCode}</span>
-                                  <span>
-                                    Description: {item.itemDescription}
-                                  </span>
+                                  <span>Desc: {item.itemDescription}</span>
                                 </>
                               ) : (
                                 <>
-                                  <input
-                                    type="text"
-                                    value={item.fabricCode}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        item.id,
-                                        "fabricCode",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Code"
-                                  />
-                                  <input
-                                    type="text"
-                                    value={item.itemDescription}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        item.id,
-                                        "itemDescription",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Description"
-                                  />
+                                  <input type="text" value={item.fabricCode} onChange={(e) => handleItemChange(item.id, "fabricCode", e.target.value)} placeholder="Code" />
+                                  <input type="text" value={item.itemDescription} onChange={(e) => handleItemChange(item.id, "itemDescription", e.target.value)} placeholder="Description" />
                                 </>
                               )}
                             </div>
                           </td>
-
                           <td>
                             {previewMode ? (
-                              <span>
-                                {item.color ? `Color: ${item.color}` : ""}
-                                <br />
-                                {item.hsCode ? `HS Code: ${item.hsCode}` : ""}
-                              </span>
+                              <span>{item.color}<br/>{item.hsCode}</span>
                             ) : (
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: "4px",
-                                }}
-                              >
-                                <input
-                                  type="text"
-                                  value={item.color}
-                                  onChange={(e) =>
-                                    handleItemChange(
-                                      item.id,
-                                      "color",
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="Color"
-                                  style={{ width: "100%", minWidth: "80px" }}
-                                />
-                                <input
-                                  type="text"
-                                  value={item.hsCode}
-                                  onChange={(e) =>
-                                    handleItemChange(
-                                      item.id,
-                                      "hsCode",
-                                      e.target.value
-                                    )
-                                  }
-                                  placeholder="HS Code"
-                                  style={{ width: "100%", minWidth: "80px" }}
-                                />
+                              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                <input type="text" value={item.color} onChange={(e) => handleItemChange(item.id, "color", e.target.value)} placeholder="Color" />
+                                <input type="text" value={item.hsCode} onChange={(e) => handleItemChange(item.id, "hsCode", e.target.value)} placeholder="HS Code" />
                               </div>
                             )}
                           </td>
                           <td>
-                            {previewMode ? (
-                              <span>{item.rcvdDate}</span>
-                            ) : (
-                              <input
-                                type="date"
-                                value={item.rcvdDate}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "rcvdDate",
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            )}
+                            {previewMode ? <span>{item.rcvdDate}</span> : <input type="date" value={item.rcvdDate} onChange={(e) => handleItemChange(item.id, "rcvdDate", e.target.value)} min="1000-01-01" max="9999-12-31" />}
                           </td>
                           <td>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.25rem",
-                              }}
-                            >
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                               {previewMode ? (
                                 <>
-                                  <span>Challan No: {item.challanNo}</span>
-                                  <span>PI No: {item.piNumber}</span>
+                                  <span>CH: {item.challanNo}</span>
+                                  <span>PI: {item.piNumber}</span>
                                 </>
                               ) : (
                                 <>
-                                  <input
-                                    type="text"
-                                    value={item.challanNo}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        item.id,
-                                        "challanNo",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Challan No"
-                                  />
-                                  <input
-                                    type="text"
-                                    value={item.piNumber}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        item.id,
-                                        "piNumber",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="PI No"
-                                  />
+                                  <input type="text" value={item.challanNo} onChange={(e) => handleItemChange(item.id, "challanNo", e.target.value)} placeholder="Challan No" />
+                                  <input type="text" value={item.piNumber} onChange={(e) => handleItemChange(item.id, "piNumber", e.target.value)} placeholder="PI No" />
                                 </>
                               )}
                             </div>
                           </td>
-
                           <td>
-                            {previewMode ? (
-                              <span>{item.unit}</span>
-                            ) : (
-                              <select
-                                value={item.unit}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "unit",
-                                    e.target.value
-                                  )
-                                }
-                              >
-                                <option>YDS</option>
-                                <option>PCS</option>
-                                <option>KG</option>
-                                <option>MTR</option>
-                                <option>BOX</option>
+                            {previewMode ? <span>{item.unit}</span> : (
+                              <select value={item.unit} onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}>
+                                <option>YDS</option><option>PCS</option><option>KG</option><option>MTR</option><option>BOX</option>
                               </select>
                             )}
                           </td>
                           <td>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.25rem",
-                              }}
-                            >
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                               {previewMode ? (
                                 <>
-                                  <span>
-                                    Invoice:{" "}
-                                    {(Number(item.invoiceQty) || 0).toFixed(2)}
-                                  </span>
-                                  <span>
-                                    Received:{" "}
-                                    {(Number(item.rcvdQty) || 0).toFixed(2)}
-                                  </span>
+                                  <span>Inv: {Number(item.invoiceQty).toFixed(2)}</span>
+                                  <span>Rec: {Number(item.rcvdQty).toFixed(2)}</span>
                                 </>
                               ) : (
                                 <>
-                                  <input
-                                    type="number"
-                                    value={item.invoiceQty}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        item.id,
-                                        "invoiceQty",
-                                        parseFloat(e.target.value) || 0
-                                      )
-                                    }
-                                    placeholder="Invoice Qty"
-                                    step="0.01"
-                                  />
-                                  <input
-                                    type="number"
-                                    value={item.rcvdQty}
-                                    onChange={(e) =>
-                                      handleItemChange(
-                                        item.id,
-                                        "rcvdQty",
-                                        parseFloat(e.target.value) || 0
-                                      )
-                                    }
-                                    placeholder="Received Qty"
-                                    step="0.01"
-                                  />
+                                  <input type="number" value={item.invoiceQty} onChange={(e) => handleItemChange(item.id, "invoiceQty", parseFloat(e.target.value) || 0)} placeholder="Inv Qty" step="0.01" />
+                                  <input type="number" value={item.rcvdQty} onChange={(e) => handleItemChange(item.id, "rcvdQty", parseFloat(e.target.value) || 0)} placeholder="Rec Qty" step="0.01" />
                                 </>
                               )}
                             </div>
                           </td>
-
                           <td>
-                            {previewMode ? (
-                              <span>
-                                ${(Number(item.unitPrice) || 0).toFixed(2)}
-                              </span>
-                            ) : (
-                              <input
-                                type="number"
-                                value={item.unitPrice}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "unitPrice",
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                placeholder="0.00"
-                                step="0.01"
-                              />
-                            )}
+                            {previewMode ? <span>${Number(item.unitPrice).toFixed(2)}</span> : <input type="number" value={item.unitPrice} onChange={(e) => handleItemChange(item.id, "unitPrice", parseFloat(e.target.value) || 0)} placeholder="0.00" step="0.01" />}
                           </td>
-                          <td className="text-right">
-                            <strong>${itemTotal.toFixed(2)}</strong>
+                          <td className="text-right"><strong>${itemTotal.toFixed(2)}</strong></td>
+                          <td>
+                            {previewMode ? <span>{item.appstremeNo}</span> : <input type="text" value={item.appstremeNo} onChange={(e) => handleItemChange(item.id, "appstremeNo", e.target.value)} placeholder="No" />}
                           </td>
                           <td>
-                            {previewMode ? (
-                              <span>{item.appstremeNo}</span>
-                            ) : (
-                              <input
-                                type="text"
-                                value={item.appstremeNo}
-                                onChange={(e) =>
-                                  handleItemChange(
-                                    item.id,
-                                    "appstremeNo",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="No"
-                              />
-                            )}
-                          </td>
-                          <td>
-                            {!previewMode && (
-                              <button
-                                className="btn btn-danger btn-sm"
-                                onClick={() => removeRow(item.id)}
-                                title="Delete row"
-                                disabled={items.length === 1}
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            )}
+                            {!previewMode && <button className="btn btn-danger btn-sm" onClick={() => removeRow(item.id)} disabled={items.length === 1}><Trash2 size={14} /></button>}
                           </td>
                         </tr>
                       );
@@ -557,42 +369,19 @@ const App: React.FC = () => {
         <div className="footer-summary">
           <div className="footer-summary-item">
             <div className="footer-summary-label">Buyer Name</div>
-            <div className="footer-summary-value">
-              {header.buyerName || "Not selected"}
-            </div>
+            <div className="footer-summary-value">{header.buyerName || "Not selected"}</div>
           </div>
-
-          <div
-            className={`footer-summary-item ${
-              totals.totalInvoiceQty !== totals.totalRcvdQty
-                ? "qty-mismatch"
-                : ""
-            }`}
-          >
+          <div className={`footer-summary-item ${totals.totalInvoiceQty !== totals.totalRcvdQty ? "qty-mismatch" : ""}`}>
             <div className="footer-summary-label">Invoice Qty</div>
-            <div className="footer-summary-value">
-              {totals.totalInvoiceQty.toFixed(2)}
-            </div>
+            <div className="footer-summary-value">{totals.totalInvoiceQty.toFixed(2)}</div>
           </div>
-
-          <div
-            className={`footer-summary-item ${
-              totals.totalInvoiceQty !== totals.totalRcvdQty
-                ? "qty-mismatch"
-                : ""
-            }`}
-          >
+          <div className={`footer-summary-item ${totals.totalInvoiceQty !== totals.totalRcvdQty ? "qty-mismatch" : ""}`}>
             <div className="footer-summary-label">Rcvd Qty</div>
-            <div className="footer-summary-value">
-              {totals.totalRcvdQty.toFixed(2)}
-            </div>
+            <div className="footer-summary-value">{totals.totalRcvdQty.toFixed(2)}</div>
           </div>
-
           <div className="footer-summary-item">
             <div className="footer-summary-label">Total Value</div>
-            <div className="footer-summary-value">
-              {formatCurrency(totals.totalValue)}
-            </div>
+            <div className="footer-summary-value">{formatCurrency(totals.totalValue)}</div>
           </div>
         </div>
         <div className="footer-actions">
@@ -616,6 +405,9 @@ interface InputFieldProps {
   required?: boolean;
   bold?: boolean;
   error?: boolean;
+  className?: string;
+  min?: string;
+  max?: string;
 }
 
 const InputField: React.FC<InputFieldProps> = ({
@@ -628,6 +420,9 @@ const InputField: React.FC<InputFieldProps> = ({
   required,
   bold = false,
   error = false,
+  className = "",
+  min,
+  max,
 }) => (
   <div className="input-field">
     <label className="input-label">
@@ -639,7 +434,9 @@ const InputField: React.FC<InputFieldProps> = ({
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      className={`${bold ? "input-bold" : ""} ${error ? "input-error" : ""}`}
+      className={`${className} ${bold ? "input-bold" : ""} ${error ? "input-error" : ""}`}
+      min={min}
+      max={max}
     />
   </div>
 );
