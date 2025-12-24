@@ -205,28 +205,10 @@ const App: React.FC = () => {
                   placeholder="L/C Number"
                   className="lc-highlight"
                 />
-
-                <div className="row-50-50">
-                  <InputField
-                    label="Invoice Date"
-                    name="invoiceDate"
-                    type="date"
-                    value={header.invoiceDate}
-                    onChange={handleHeaderChange}
-                    min="1000-01-01"
-                    max="9999-12-31"
-                  />
-
-                  <InputField
-                    label="Billing Date"
-                    name="billingDate"
-                    type="date"
-                    value={header.billingDate}
-                    onChange={handleHeaderChange}
-                    required
-                    min="1000-01-01"
-                    max="9999-12-31"
-                  />
+                  <div className="row-50-50">
+                    <SmartDateInput label="Invoice Date" value={header.invoiceDate} onChange={(val) => setHeader(p => ({ ...p, invoiceDate: val }))} />
+                    <SmartDateInput label="Billing Date" value={header.billingDate} onChange={(val) => setHeader(p => ({ ...p, billingDate: val }))} required />
+                  </div>
                 </div>
               </div>
             </div>
@@ -305,8 +287,8 @@ const App: React.FC = () => {
                             )}
                           </td>
                           <td>
-                            {previewMode ? <span>{item.rcvdDate}</span> : <input type="date" value={item.rcvdDate} onChange={(e) => handleItemChange(item.id, "rcvdDate", e.target.value)} min="1000-01-01" max="9999-12-31" />}
-                          </td>
+                        {previewMode ? <span>{item.rcvdDate}</span> : <SmartDateInput value={item.rcvdDate} onChange={val => handleItemChange(item.id, 'rcvdDate', val)} />}
+                      </td>
                           <td>
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
                               {previewMode ? (
